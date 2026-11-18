@@ -1,7 +1,12 @@
 /* Pyodide 桥：把原本跑在 Python 服务器上的排版逻辑搬进浏览器。
    对 app.js 完全透明——它还是照常 fetch("api/render")，这里把请求截下来交给 Python。 */
 (() => {
-  const PYODIDE_URL = "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/";
+  // 国内 jsdelivr 经常不稳，依次试几个源
+  const CDN_LIST = [
+    "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/",
+    "https://fastly.jsdelivr.net/pyodide/v0.27.7/full/",
+    "https://unpkg.com/pyodide@0.27.7/",
+  ];
   const PY_FILES = ["__init__", "planner", "renderer", "fonts", "palettes", "cutout", "doodles", "sticker", "decor"];
   const FONT_FILE = "乐米蜡笔体.ttf";
 
@@ -23,6 +28,9 @@
       bootText.textContent = "启动失败：" + msg;
       bootText.style.color = "#e08a7a";
     }
+    const retry = document.getElementById("bootRetry");
+    if (retry) retry.hidden = false;
+    if (bootBar) bootBar.style.background = "#7a3b33";
     if (boot) boot.dataset.error = "1";
   }
 
@@ -33,10 +41,52 @@
     py.FS.writeFile(path, data);
   }
 
-  async function fetchBytes(url) {
+  async function fetchBytes(url, onProgress) {
     const res = await fetch(url);
-    if (!res.ok) throw new Error(url + " -> " + res.status);
-    return new Uint8Array(await res.arrayBuffer());
+    if (!res.ok) throw new Error(url + " -> HTTP " + res.status);
+    const total = Number(res.headers.get("Content-Length") || 0);
+    if (!res.body || !total || !onProgress) {
+      return new Uint8Array(await res.arrayBuffer());
+    }
+    const reader = res.body.getReader();
+    const chunks = [];
+    let got = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      got += value.length;
+      onProgress(got / total);
+    }
+    const out = new Uint8Array(got);
+    let off = 0;
+    for (const c of chunks) {
+      out.set(c, off);
+      off += c.length;
+    }
+    return out;
+  }
+
+  async function loadFontBytes() {
+    const name = encodeURIComponent(FONT_FILE);
+    const gzUrl = `assets/fonts/${name}.gz`;
+    try {
+      let bytes = await fetchBytes(gzUrl, (p) => {
+        status(`载入手写字体 ${Math.round(p * 100)}%（5MB）`, 70 + p * 20);
+      });
+      const enc = "gzip";
+      if (typeof DecompressionStream === "function") {
+        const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream(enc));
+        bytes = new Uint8Array(await new Response(stream).arrayBuffer());
+      }
+      if (bytes.length > 1e6) return bytes;
+    } catch (err) {
+      console.warn("gz 字体失败，改用原始文件", err);
+    }
+    status("载入手写字体（12MB，可能较慢）…", 70);
+    return await fetchBytes(`assets/fonts/${name}`, (p) => {
+      status(`载入手写字体 ${Math.round(p * 100)}%`, 70 + p * 20);
+    });
   }
 
   const BOOT_PY = `
@@ -133,10 +183,39 @@ def cutout_page(payload_json):
     }, ensure_ascii=False, default=str)
 `;
 
+  function loadScript(src) {
+    return new Promise((res, rej) => {
+      const el = document.createElement("script");
+      el.src = src;
+      el.onload = () => res(true);
+      el.onerror = () => rej(new Error("加载失败 " + src));
+      document.head.appendChild(el);
+    });
+  }
+
+  async function pickCdn() {
+    for (const base of CDN_LIST) {
+      try {
+        if (!window.loadPyodide) {
+          status("下载 Python 运行时…", 8);
+          await loadScript(base + "pyodide.js");
+        }
+        if (!window.loadPyodide) throw new Error("loadPyodide 未定义");
+        const r = await fetch(base + "pyodide-lock.json", { cache: "force-cache" });
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return base;
+      } catch (err) {
+        console.warn("源不可用，换下一个：", base, err);
+      }
+    }
+    throw new Error("所有 Python 运行时的下载源都不可用（网络被拦？）");
+  }
+
   async function boot_() {
     try {
-      status("下载 Python 运行时（约 12MB）…", 8);
-      py = await loadPyodide({ indexURL: PYODIDE_URL });
+      const base = await pickCdn();
+      status("启动 Python 运行时…", 18);
+      py = await loadPyodide({ indexURL: base });
 
       status("加载 Pillow / numpy…", 35);
       await py.loadPackage(["pillow", "numpy"]);
@@ -147,8 +226,7 @@ def cutout_page(payload_json):
         writeFile(`/home/pyodide/journal/${name}.py`, text);
       }
 
-      status("载入手写字体（12MB）…", 72);
-      const fontBytes = await fetchBytes(`assets/fonts/${encodeURIComponent(FONT_FILE)}`);
+      const fontBytes = await loadFontBytes();
       writeFile(`/home/pyodide/assets/fonts/${FONT_FILE}`, fontBytes);
 
       status("初始化…", 92);

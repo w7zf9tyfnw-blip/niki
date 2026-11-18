@@ -392,3 +392,18 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   color: var(--muted); font-size: 11.5px;
 }
 .stk-bar .mk-size input { width: 120px; }
+
+
+/* ---------- 启动遮罩（Pyodide 版） ---------- */
+.boot{position:fixed;inset:0;background:#0b0b0e;display:grid;place-items:center;z-index:999}
+.boot[hidden]{display:none !important}
+.boot-card{text-align:center;padding:30px 26px;max-width:460px}
+.boot-mark{font-size:26px;color:#e3c08a;margin-bottom:10px}
+.boot h2{font-size:15px;margin:0 0 10px;letter-spacing:.08em;color:#ece9e2;font-weight:600}
+.boot p{margin:0;color:#8a8a93;font-size:12px;line-height:1.7;word-break:break-all}
+.boot-bar{height:3px;background:#1b1b21;border-radius:99px;margin:18px 0 12px;overflow:hidden}
+.boot-bar i{display:block;height:100%;width:12%;background:linear-gradient(90deg,#e3c08a,#8a6f45);transition:width .35s}
+.boot-tip{font-size:11px;color:#5f5f68;margin-top:10px}
+.boot-retry{margin-top:16px;height:34px;padding:0 18px;border-radius:9px;border:1px solid #3a3a42;
+  background:#1b1b21;color:#e3c08a;font-family:inherit;font-size:12px;cursor:pointer}
+.boot-retry[hidden]{display:none !important}
