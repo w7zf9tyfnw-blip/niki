@@ -3,559 +3,205 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>手账工坊 · 纯前端版</title>
-<style>
-  :root{
-    --bg:#0c0c0f; --panel:#141418; --panel2:#101014;
-    --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
-    --text:#ece9e2; --muted:#8a8a93; --accent:#e3c08a;
-  }
-  *{box-sizing:border-box}
-  [hidden]{display:none !important}
-  html,body{margin:0;height:100%}
-  body{
-    background:#0b0b0e;color:var(--text);
-    font-family:"PingFang SC","Microsoft YaHei UI","Noto Sans SC",system-ui,sans-serif;
-    font-size:14px;-webkit-text-size-adjust:100%;
-  }
-  .app{display:grid;grid-template-columns:360px minmax(0,1fr);height:100vh;height:100dvh}
-  .panel{background:var(--panel);border-right:1px solid var(--line);padding:18px 16px;overflow:auto}
-  .brand{display:flex;gap:10px;align-items:center;margin-bottom:16px}
-  .logo{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;
-    background:linear-gradient(150deg,#2a2419,#17161a);border:1px solid rgba(227,192,138,.35);color:var(--accent)}
-  .brand h1{font-size:14px;margin:0;letter-spacing:.06em}
-  .brand p{margin:2px 0 0;color:var(--muted);font-size:11px}
-  .field{margin-bottom:16px}
-  .label{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;
-    color:#b9b7b1;font-size:11.5px;letter-spacing:.08em}
-  .drop{display:block;height:110px;border:1px dashed var(--line2);border-radius:12px;
-    background:var(--panel2);cursor:pointer;overflow:hidden;position:relative}
-  .drop img{width:100%;height:100%;object-fit:cover;display:block}
-  .drop span{position:absolute;inset:0;display:grid;place-items:center;color:#6f6f78;font-size:12px}
-  textarea{width:100%;min-height:96px;resize:vertical;background:var(--panel2);color:var(--text);
-    border:1px solid var(--line2);border-radius:12px;padding:10px 12px;font:inherit;font-size:16px;line-height:1.6}
-  .swatches{display:flex;flex-wrap:wrap;gap:8px}
-  .sw{width:26px;height:26px;border-radius:50%;border:1px solid rgba(255,255,255,.16);cursor:pointer}
-  .sw.on{box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--accent)}
-  .row{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:12px;color:#9b9aa2}
-  input[type=range]{flex:1;accent-color:var(--accent)}
-  .actions{display:flex;gap:8px;position:sticky;bottom:0;padding-top:12px;
-    background:linear-gradient(180deg,rgba(20,20,24,0),var(--panel) 40%)}
-  button{font-family:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line2);
-    background:#1b1b21;color:#cfcdc6;height:38px;padding:0 14px;font-size:12.5px}
-  button.primary{flex:1;background:linear-gradient(160deg,#efd3a4,#d9b582);color:#241d13;border:0;font-weight:600}
-  button.ghost{background:none;border:0;color:var(--muted);text-decoration:underline;text-underline-offset:3px;padding:0;height:auto}
-  .stage{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;min-width:0;overflow:auto}
-  .page{position:relative;box-shadow:0 24px 70px rgba(0,0,0,.6);border-radius:4px;line-height:0}
-  canvas{display:block;max-height:calc(100dvh - 90px);max-width:100%;border-radius:4px;touch-action:none}
-  .hint{color:#6f6f78;font-size:11.5px;text-align:center;min-height:16px}
-  @media (max-width:900px){
-    .app{grid-template-columns:1fr;height:auto;min-height:100dvh}
-    .stage{order:-1;padding:10px;position:sticky;top:0;background:#0b0b0e;z-index:5;border-bottom:1px solid var(--line)}
-    canvas{max-height:40dvh}
-    .panel{border:0;padding-bottom:calc(18px + env(safe-area-inset-bottom))}
-    .actions{padding-bottom:6px}
-  }
-</style>
+<title>手账工坊 · 一张照片，一段想法，一页手账</title>
+<link rel="stylesheet" href="style.css" />
 </head>
 <body>
 <div class="app">
   <aside class="panel">
-    <div class="brand">
+    <header class="brand">
       <div class="logo">✦</div>
-      <div><h1>手账工坊 · 纯前端版</h1><p>不用服务器，双击就能用</p></div>
-    </div>
+      <div>
+        <h1>手账工坊</h1>
+        <p>照片 + 一句话，自动排成一页</p>
+      </div>
+    </header>
 
-    <div class="field">
-      <div class="label"><span>01 照片</span><button class="ghost" id="pickFont" type="button">加载字体</button></div>
+    <section class="field">
+      <div class="label"><span>01 照片</span><button class="ghost" id="sampleBtn" type="button">用示例</button></div>
       <label class="drop" id="drop">
         <input type="file" id="file" accept="image/*" hidden />
         <img id="thumb" alt="" hidden />
-        <span id="dropHint">点击或拖入照片</span>
+        <div class="drop-inner" id="dropHint">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.4">
+            <rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 15l4.5-4.5L12 15l3-3 6 6"/><circle cx="8.5" cy="9" r="1.4"/>
+          </svg>
+          <span>点击或拖入照片</span>
+        </div>
       </label>
-      <input type="file" id="fontFile" accept=".ttf,.otf,font/ttf,font/otf" hidden />
-    </div>
+    </section>
 
-    <div class="field">
-      <div class="label"><span>02 想法</span></div>
-      <textarea id="text" placeholder="随手写：今天逛到一家很酷的复古衣服店，叫 basin kin，他家卖的是复古衣服，版型很好看。"></textarea>
-    </div>
+    <section class="field">
+      <div class="label">
+        <span>02 想法</span>
+        <button class="mic" id="mic" type="button" title="按住说话（Chrome / Edge）">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6">
+            <rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>
+          </svg>
+          <span id="micText">说两句</span>
+        </button>
+      </div>
+      <textarea id="text" placeholder="随口说：今天逛到一家很酷的复古衣服店，叫 basickin，他家是卖复古衣服的，版型很好看，逛得好开心…"></textarea>
+      <div class="hint" id="interim"></div>
+      <div class="parse" id="parse" hidden>
+        <div class="prow"><b>标签</b><span id="pTag">—</span></div>
+        <div class="prow"><b>介绍</b><span id="pIntro">—</span></div>
+        <div class="prow"><b>感受</b><span id="pFeel">—</span></div>
+      </div>
+    </section>
 
-    <div class="field">
-      <div class="label"><span>03 背景色</span></div>
+    <section class="field">
+      <div class="label">
+        <span>03 背景色</span>
+        <span class="label-actions">
+          <button class="ghost" id="autoBtn" type="button">跟随照片</button>
+          <button class="ghost" id="textBtn" type="button">跟随文字</button>
+        </span>
+      </div>
       <div class="swatches" id="swatches"></div>
-    </div>
+      <div class="row">
+        <label class="color-wrap" title="自定义颜色">
+          <input type="color" id="color" value="#16161b" />
+          <span>自定义</span>
+        </label>
+        <span class="hint" id="paletteHint">纯色底，可随时换</span>
+      </div>
+    </section>
 
-    <div class="field">
-      <div class="label"><span>04 贴纸</span></div>
-      <div class="swatches" id="stickers" style="gap:6px"></div>
-      <div class="row" id="stkCtrl" hidden>
-        <span>大小</span><input type="range" id="stkSize" min="6" max="45" value="14">
+    <section class="field">
+      <div class="label"><span>04 版式</span></div>
+      <div class="seg" id="styles">
+        <button data-v="card" class="on">照片卡片</button>
+        <button data-v="polaroid">拍立得</button>
+        <button data-v="cutout">抠图贴纸</button>
+        <button data-v="sticker">菜单贴纸</button>
+        <button data-v="none">只要文字</button>
       </div>
-      <div class="row" id="stkCtrl2" hidden>
-        <span>角度</span><input type="range" id="stkRot" min="-180" max="180" value="0">
-        <button id="stkDel" type="button">删除</button>
+      <div class="seg small" id="decor">
+        <button data-v="minimal">极简</button>
+        <button data-v="medium" class="on">手账</button>
+        <button data-v="rich">多贴一点</button>
       </div>
-    </div>
+      <div class="seg small" id="ratio">
+        <button data-v="3:4">3:4</button>
+        <button data-v="2:3" class="on">2:3</button>
+        <button data-v="1:1">1:1</button>
+        <button data-v="9:16">9:16</button>
+      </div>
+      <div class="label sub"><span>贴纸</span><button class="ghost" id="stickerHint" type="button">放进 assets/stickers/</button></div>
+      <div class="sticker-row" id="stickerRow"></div>
+
+
+      <div class="label sub"><span>标签样式</span></div>
+      <div class="seg small" id="tagStyle">
+        <button data-v="sticky" class="on">便利贴</button>
+        <button data-v="hand">手写</button>
+        <button data-v="tape">胶带</button>
+        <button data-v="none">不显示</button>
+      </div>
+      <div class="label sub"><span>排版</span></div>
+      <div class="seg small" id="layout">
+        <button data-v="auto" class="on">自动</button>
+        <button data-v="center">居中</button>
+        <button data-v="corner">四角</button>
+        <button data-v="split">分栏</button>
+      </div>
+      <div class="label sub"><span>手写字形</span></div>
+      <div class="seg fonts" id="fonts">
+        <button data-v="lemi" class="on">蜡笔</button>
+      </div>
+      <div class="toggle-row">
+        <span>手绘简笔画</span>
+        <button class="switch on" id="doodleBtn" type="button" aria-pressed="true"><i></i></button>
+      </div>
+      <div class="toggle-row">
+        <span>表情符号</span>
+        <button class="switch on" id="emojiBtn" type="button" aria-pressed="true"><i></i></button>
+      </div>
+      <div class="tol" id="tolWrap" hidden>
+        <label>抠图容差 <b id="tolVal">30</b></label>
+        <input type="range" id="tol" min="8" max="70" value="30" />
+        <div class="tol-actions">
+          <button class="ghost" id="openMask" type="button">修一下边缘 →</button>
+          <label class="chk"><input type="checkbox" id="forceBtn" /> 不干净也照用</label>
+        </div>
+      </div>
+    </section>
 
     <div class="actions">
-      <button class="primary" id="go" type="button">生成</button>
-      <button id="dl" type="button">下载 PNG</button>
+      <button class="primary" id="go" type="button">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>
+        </svg>
+        生成手账
+      </button>
+      <button class="secondary" id="dl" type="button" disabled>下载 PNG</button>
+    </div>
+
+    <div class="phone" id="phoneHint" hidden>
+      <span>手机同一 Wi-Fi 打开</span>
+      <code id="phoneUrl"></code>
     </div>
   </aside>
 
   <main class="stage">
-    <div class="page"><canvas id="cv" width="1200" height="1800"></canvas></div>
-    <div class="hint" id="hint">点「生成」出图；在图上拖动贴纸</div>
+    <div class="paper" id="paper">
+      <div class="placeholder" id="placeholder">
+        <div class="ph-mark">✧</div>
+        <p>左边放一张照片，说两句话<br/>这里就会长出一页手账</p>
+      </div>
+      <div class="page-wrap" id="pageWrap" hidden>
+        <img id="preview" alt="手账预览" />
+        <div class="stk-layer" id="stkLayer"></div>
+      </div>
+      <div class="loading" id="loading" hidden><span></span>正在排版…</div>
+    </div>
+    <div class="stk-bar" id="stkBar" hidden>
+      <span id="stkHint">拖动贴纸调整位置</span>
+      <label class="mk-size">大小 <input type="range" id="stkSize" min="6" max="40" value="13" /><b id="stkSizeVal">13</b></label>
+      <label class="mk-size">角度 <input type="range" id="stkRot" min="-180" max="180" value="0" /><b id="stkRotVal">0</b></label>
+      <button class="secondary" id="stkClear" type="button">清空贴纸</button>
+    </div>
+    <div class="meta" id="meta"></div>
   </main>
 </div>
 
-<script>
-(() => {
-  const W = 1200, H = 1800;
-  const cv = document.getElementById("cv");
-  const ctx = cv.getContext("2d");
+<div class="mk" id="mk" hidden>
+  <div class="mk-box">
+    <div class="mk-head">
+      <b>修一下边缘</b>
+      <span>涂掉多余的背景，或者把被误删的主体补回来</span>
+      <button id="mkClose" type="button" aria-label="关闭">×</button>
+    </div>
+    <div class="mk-stage"><canvas id="mkCanvas"></canvas></div>
+    <div class="mk-foot">
+      <div class="seg small" id="mkTools">
+        <button data-v="erase" class="on" type="button">擦掉</button>
+        <button data-v="restore" type="button">补回</button>
+      </div>
+      <label class="mk-size">笔刷 <input type="range" id="mkBrush" min="6" max="90" value="26" /><b id="mkBrushVal">26</b></label>
+      <button class="secondary" id="mkReset" type="button">重置</button>
+      <button class="primary" id="mkApply" type="button">应用</button>
+    </div>
+    <div class="mk-tip" id="mkTip"></div>
+  </div>
+</div>
 
-  const PALETTES = [
-    { key: "cream", name: "奶油", bg: "#F6EDE0", ink: "#352C24", accent: "#C08055" },
-    { key: "ink", name: "墨黑", bg: "#0F0F12", ink: "#F4F1EA", accent: "#E3C08A" },
-    { key: "blush", name: "藕粉", bg: "#F7E8E4", ink: "#4A3230", accent: "#C4867A" },
-    { key: "sage", name: "鼠尾草", bg: "#E8EEE2", ink: "#2F3A2C", accent: "#8FA382" },
-    { key: "paper", name: "米白", bg: "#F7F3E9", ink: "#2B2823", accent: "#B9714A" },
-    { key: "dusk", name: "暮蓝", bg: "#1E2733", ink: "#EDEFE8", accent: "#D9B98A" },
-    { key: "sky", name: "雾蓝", bg: "#E3EAF0", ink: "#28313A", accent: "#7E97AB" },
-    { key: "butter", name: "黄油", bg: "#FBF1CE", ink: "#3A3226", accent: "#C4843C" },
-  ];
+<div class="toast" id="toast" hidden></div>
 
-  const state = {
-    img: null,
-    text: "",
-    palette: PALETTES[0],
-    font: '"KaiTi","STKaiti","Kaiti SC",serif',
-    fontLoaded: false,
-    stickers: [],   // {img, x, y, size, rot}
-    sel: -1,
-    dragging: false,
-    dragOff: { x: 0, y: 0 },
-  };
+<div class="boot" id="boot">
+  <div class="boot-card">
+    <div class="boot-mark">✦</div>
+    <h2>正在准备手账工坊</h2>
+    <p id="bootText">首次打开需要下载运行时（约 25MB），之后会缓存</p>
+    <div class="boot-bar"><i id="bootBar"></i></div>
+    <p class="boot-tip">纯本地运行 · 照片不会离开这台设备</p>
+  </div>
+</div>
 
-  /* ---------- 工具 ---------- */
-  function roundRect(c, x, y, w, h, r) {
-    const rr = Math.min(r, w / 2, h / 2);
-    c.beginPath();
-    c.moveTo(x + rr, y);
-    c.arcTo(x + w, y, x + w, y + h, rr);
-    c.arcTo(x + w, y + h, x, y + h, rr);
-    c.arcTo(x, y + h, x, y, rr);
-    c.arcTo(x, y, x + w, y, rr);
-    c.closePath();
-  }
-
-  function measure(text, size, tracking) {
-    ctx.font = `${size}px ${state.font}`;
-    let w = 0;
-    for (const ch of text) w += ctx.measureText(ch).width + tracking;
-    return w - tracking;
-  }
-
-  function drawLine(text, cx, baseline, size, color, tracking, align = "center") {
-    ctx.font = `${size}px ${state.font}`;
-    ctx.fillStyle = color;
-    const total = measure(text, size, tracking);
-    let x = align === "center" ? cx - total / 2 : align === "right" ? cx - total : cx;
-    for (const ch of text) {
-      ctx.fillText(ch, x, baseline);
-      x += ctx.measureText(ch).width + tracking;
-    }
-  }
-
-  function wrapByWidth(text, size, maxW) {
-    ctx.font = `${size}px ${state.font}`;
-    const out = [];
-    let cur = "";
-    for (const ch of text) {
-      const t = cur + ch;
-      if (ctx.measureText(t).width <= maxW || !cur) cur = t;
-      else { out.push(cur); cur = ch; }
-    }
-    if (cur) out.push(cur);
-    return out;
-  }
-
-  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
-
-  /* ---------- 文本整理 ---------- */
-  function splitText(raw) {
-    const clean = (raw || "").replace(/\s+/g, " ").trim();
-    if (!clean) return { tag: null, lines: ["今天也值得记一笔"] };
-    let tag = null;
-    const m = clean.match(/(?:叫|名字叫|名字是|店名是)\s*([A-Za-z0-9&.\- ]{2,18})/);
-    if (m) tag = m[1].trim();
-    const parts = clean.split(/[。！？!?；;，,\n]+/).map(s => s.trim()).filter(Boolean);
-    const lines = [];
-    for (const p of parts) {
-      if (tag && p.includes(tag)) continue;
-      const n = Math.ceil(p.length / 13);
-      const size = Math.ceil(p.length / n);
-      for (let i = 0; i < p.length; i += size) lines.push(p.slice(i, i + size));
-    }
-    return { tag, lines: lines.slice(0, 6) };
-  }
-
-  /* ---------- 渲染 ---------- */
-  function render() {
-    const p = state.palette;
-    ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = p.bg;
-    ctx.fillRect(0, 0, W, H);
-
-    const margin = 104;
-    const dark = isDark(p.bg);
-    const ink = p.ink;
-    const sub = withAlpha(ink, 0.55);
-
-    // 日期
-    const d = new Date();
-    const dateStr = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
-    ctx.save();
-    ctx.textAlign = "left";
-    ctx.font = `26px "Segoe UI",system-ui,sans-serif`;
-    drawLine(dateStr, W / 2, margin + 26, 26, sub, 8);
-    ctx.restore();
-
-    const { tag, lines } = splitText(state.text);
-    const bodySize = 64;
-    const lead = 96;
-    const bodyW = W - margin * 2;
-
-    // 图片
-    let photoBottom = margin + 60;
-    if (state.img) {
-      const boxW = 760, boxH = 900;
-      const ar = state.img.width / state.img.height;
-      let dw = boxW, dh = boxW / ar;
-      if (dh > boxH) { dh = boxH; dw = boxH * ar; }
-      const x = (W - dw) / 2;
-      const y = margin + 90;
-      ctx.save();
-      ctx.shadowColor = "rgba(0,0,0,.22)";
-      ctx.shadowBlur = 34;
-      ctx.shadowOffsetY = 16;
-      roundRect(ctx, x, y, dw, dh, 26);
-      ctx.fillStyle = p.bg;
-      ctx.fill();
-      ctx.restore();
-
-      ctx.save();
-      roundRect(ctx, x, y, dw, dh, 26);
-      ctx.clip();
-      // cover 裁剪
-      const scale = Math.max(dw / state.img.width, dh / state.img.height);
-      const sw = dw / scale, sh = dh / scale;
-      const sx = (state.img.width - sw) / 2, sy = (state.img.height - sh) * 0.42;
-      ctx.drawImage(state.img, sx, sy, sw, sh, x, y, dw, dh);
-      ctx.restore();
-
-      photoBottom = y + dh;
-
-      // 标签
-      if (tag) {
-        const fs = 34;
-        const tw = measure(tag, fs, 2) + 52;
-        const th = 58;
-        const tx = x + 10, ty = y + dh * 0.68;
-        ctx.save();
-        ctx.translate(tx, ty);
-        ctx.rotate(-3 * Math.PI / 180);
-        roundRect(ctx, 0, 0, tw, th, 9);
-        ctx.fillStyle = withAlpha(ink, 0.10);
-        ctx.fill();
-        ctx.strokeStyle = withAlpha(ink, 0.35);
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        drawLine(tag, tw / 2, th * 0.70, fs, ink, 2, "center");
-        ctx.restore();
-      }
-    }
-
-    // 正文
-    let y = photoBottom + 110;
-    const wrapped = [];
-    for (const ln of lines) wrapped.push(...wrapByWidth(ln, bodySize, bodyW));
-    const shown = wrapped.slice(0, 7);
-    const bodyPart = shown.length > 1 ? shown.slice(0, -1) : shown;
-    const feelPart = shown.length > 1 ? shown[shown.length - 1] : null;
-    for (const ln of bodyPart) {
-      drawLine(ln, W / 2, y, bodySize, ink, 6);
-      y += lead;
-    }
-
-    if (feelPart) {
-      ctx.save();
-      ctx.strokeStyle = withAlpha(p.accent, 0.7);
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(W / 2 - 90, y + 14);
-      ctx.lineTo(W / 2 + 90, y + 14);
-      ctx.stroke();
-      ctx.restore();
-      y += 96;
-      drawLine(feelPart, W / 2, y, bodySize * 0.94, p.accent, 6);
-    }
-
-    drawStickers();
-
-    // 选中框
-    if (state.sel >= 0 && state.stickers[state.sel]) {
-      const s = state.stickers[state.sel];
-      ctx.save();
-      ctx.translate(s.x, s.y);
-      ctx.rotate((s.rot || 0) * Math.PI / 180);
-      const w = s.size * W, h = w * s.img.height / s.img.width;
-      ctx.setLineDash([10, 8]);
-      ctx.strokeStyle = "rgba(227,192,138,.95)";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(-w / 2 - 8, -h / 2 - 8, w + 16, h + 16);
-      ctx.restore();
-    }
-
-    ctx.save();
-    ctx.strokeStyle = withAlpha(ink, 0.12);
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(margin, H - margin * 0.62);
-    ctx.lineTo(W - margin, H - margin * 0.62);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  function drawStickers() {
-    for (let i = 0; i < state.stickers.length; i++) {
-      const s = state.stickers[i];
-      const w = s.size * W;
-      const h = w * s.img.height / s.img.width;
-      ctx.save();
-      ctx.translate(s.x, s.y);
-      ctx.rotate((s.rot || 0) * Math.PI / 180);
-      ctx.drawImage(s.img, -w / 2, -h / 2, w, h);
-      ctx.restore();
-    }
-  }
-
-  function isDark(hex) {
-    const c = hex.replace("#", "");
-    const r = parseInt(c.slice(0, 2), 16), g = parseInt(c.slice(2, 4), 16), b = parseInt(c.slice(4, 6), 16);
-    return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 < 0.5;
-  }
-
-  function withAlpha(hex, a) {
-    const c = hex.replace("#", "");
-    const r = parseInt(c.slice(0, 2), 16), g = parseInt(c.slice(2, 4), 16), b = parseInt(c.slice(4, 6), 16);
-    return `rgba(${r},${g},${b},${a})`;
-  }
-
-  /* ---------- 贴纸 ---------- */
-  const STICKER_LIB = [
-    { name: "心", url: "assets/stickers/heart.png" },
-    { name: "星", url: "assets/stickers/star.png" },
-    { name: "花", url: "assets/stickers/flower.png" },
-    { name: "咖啡", url: "assets/stickers/coffee.png" },
-    { name: "猫爪", url: "assets/stickers/catpaw.png" },
-    { name: "气球", url: "assets/stickers/balloon.png" },
-    { name: "小熊", url: "assets/stickers/bear_02.png" },
-    { name: "派对熊", url: "assets/stickers/bear_05.png" },
-    { name: "爱心猫", url: "assets/stickers/kitty_01.png" },
-    { name: "相机", url: "assets/stickers/obj_10.png" },
-    { name: "面包", url: "assets/stickers/obj_28.png" },
-    { name: "夹子", url: "assets/stickers/clip_01.png" },
-  ];
-  const loadedStickers = [];
-
-  function buildStickers() {
-    const wrap = document.getElementById("stickers");
-    STICKER_LIB.forEach((item) => {
-      const b = document.createElement("button");
-      b.className = "sw";
-      b.style.background = "#f4f0e7";
-      b.title = item.name;
-      const im = document.createElement("img");
-      im.src = item.url;
-      im.style.cssText = "width:100%;height:100%;object-fit:contain;border-radius:50%";
-      b.appendChild(im);
-      b.addEventListener("click", () => addSticker(item.url));
-      wrap.appendChild(b);
-      const probe = new Image();
-      probe.onload = () => loadedStickers.push({ url: item.url, img: probe });
-      probe.src = item.url;
-    });
-  }
-
-  function addSticker(url) {
-    const hit = loadedStickers.find((s) => s.url === url);
-    if (!hit) return;
-    const spots = [[0.20, 0.22], [0.80, 0.22], [0.20, 0.70], [0.80, 0.70]];
-    const sp = spots[state.stickers.length % spots.length];
-    state.stickers.push({ img: hit.img, x: sp[0] * W, y: sp[1] * H, size: 0.14, rot: -6 });
-    state.sel = state.stickers.length - 1;
-    syncStickerControls();
-    render();
-  }
-
-  function syncStickerControls() {
-    const s = state.stickers[state.sel];
-    document.getElementById("stkCtrl").hidden = !s;
-    document.getElementById("stkCtrl2").hidden = !s;
-    if (s) {
-      document.getElementById("stkSize").value = Math.round(s.size * 100);
-      document.getElementById("stkRot").value = Math.round(s.rot || 0);
-    }
-  }
-
-  /* ---------- 交互 ---------- */
-  function toCanvas(e) {
-    const r = cv.getBoundingClientRect();
-    return {
-      x: (e.clientX - r.left) * (W / r.width),
-      y: (e.clientY - r.top) * (H / r.height),
-    };
-  }
-
-  function hitTest(x, y) {
-    for (let i = state.stickers.length - 1; i >= 0; i--) {
-      const s = state.stickers[i];
-      const dx = x - s.x, dy = y - s.y;
-      const a = -(s.rot || 0) * Math.PI / 180;
-      const lx = dx * Math.cos(a) - dy * Math.sin(a);
-      const ly = dx * Math.sin(a) + dy * Math.cos(a);
-      const w = s.size * W, h = w * s.img.height / s.img.width;
-      if (Math.abs(lx) <= w / 2 && Math.abs(ly) <= h / 2) return i;
-    }
-    return -1;
-  }
-
-  cv.addEventListener("pointerdown", (e) => {
-    const p = toCanvas(e);
-    const i = hitTest(p.x, p.y);
-    state.sel = i;
-    syncStickerControls();
-    if (i >= 0) {
-      state.dragging = true;
-      state.dragOff = { x: p.x - state.stickers[i].x, y: p.y - state.stickers[i].y };
-      try { cv.setPointerCapture(e.pointerId); } catch (_) {}
-    }
-    render();
-  });
-
-  cv.addEventListener("pointermove", (e) => {
-    if (!state.dragging || state.sel < 0) return;
-    const p = toCanvas(e);
-    const s = state.stickers[state.sel];
-    s.x = clamp(p.x - state.dragOff.x, 0, W);
-    s.y = clamp(p.y - state.dragOff.y, 0, H);
-    render();
-  });
-
-  const endDrag = () => { state.dragging = false; };
-  cv.addEventListener("pointerup", endDrag);
-  cv.addEventListener("pointercancel", endDrag);
-
-  /* ---------- 面板 ---------- */
-  const swWrap = document.getElementById("swatches");
-  PALETTES.forEach((p) => {
-    const b = document.createElement("button");
-    b.className = "sw";
-    b.style.background = p.bg;
-    b.title = p.name;
-    b.addEventListener("click", () => {
-      state.palette = p;
-      [...swWrap.children].forEach((el) => el.classList.toggle("on", el === b));
-      render();
-    });
-    swWrap.appendChild(b);
-  });
-  swWrap.children[0].classList.add("on");
-
-  const fileInput = document.getElementById("file");
-  const thumb = document.getElementById("thumb");
-  fileInput.addEventListener("change", async (e) => {
-    const f = e.target.files && e.target.files[0];
-    if (!f) return;
-    const url = URL.createObjectURL(f);
-    const im = new Image();
-    im.onload = () => {
-      state.img = im;
-      thumb.src = url;
-      thumb.hidden = false;
-      document.getElementById("dropHint").hidden = true;
-      render();
-    };
-    im.src = url;
-  });
-
-  document.getElementById("text").addEventListener("input", (e) => {
-    state.text = e.target.value;
-  });
-
-  document.getElementById("go").addEventListener("click", render);
-
-  document.getElementById("stkSize").addEventListener("input", (e) => {
-    const s = state.stickers[state.sel];
-    if (!s) return;
-    s.size = Number(e.target.value) / 100;
-    render();
-  });
-  document.getElementById("stkRot").addEventListener("input", (e) => {
-    const s = state.stickers[state.sel];
-    if (!s) return;
-    s.rot = Number(e.target.value);
-    render();
-  });
-  document.getElementById("stkDel").addEventListener("click", () => {
-    if (state.sel < 0) return;
-    state.stickers.splice(state.sel, 1);
-    state.sel = -1;
-    syncStickerControls();
-    render();
-  });
-
-  /* ---------- 字体 ---------- */
-  document.getElementById("pickFont").addEventListener("click", () => {
-    document.getElementById("fontFile").click();
-  });
-  document.getElementById("fontFile").addEventListener("change", async (e) => {
-    const f = e.target.files && e.target.files[0];
-    if (!f) return;
-    try {
-      const buf = await f.arrayBuffer();
-      const face = new FontFace("JournalFont", buf);
-      await face.load();
-      document.fonts.add(face);
-      state.font = '"JournalFont"';
-      state.fontLoaded = true;
-      document.getElementById("hint").textContent = "字体已加载：" + f.name;
-      render();
-    } catch (err) {
-      document.getElementById("hint").textContent = "字体加载失败：" + err.message;
-    }
-  });
-
-  /* ---------- 下载 ---------- */
-  document.getElementById("dl").addEventListener("click", () => {
-    cv.toBlob((blob) => {
-      if (!blob) return;
-      const a = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-      a.href = url;
-      a.download = "手账-" + new Date().toISOString().slice(0, 10) + ".png";
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1200);
-    }, "image/png");
-  });
-
-  buildStickers();
-  render();
-})();
-</script>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
+<script src="stickers-manifest.js"></script>
+<script src="bridge.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
